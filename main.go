@@ -11,6 +11,8 @@ import (
 
 const WIDTH = 30
 const HEIGHT = 20
+const DIFFICULT_UP_PERSENT = 10
+const DIFFICULT_UP_AFTER_TURNS = 50
 var speed = 250
 
 type Point struct {
@@ -18,7 +20,7 @@ type Point struct {
 	y int
 }
 
-var direction = Point{0, -1}
+var vector = Point{0, -1}
 var head = Point{WIDTH/2, HEIGHT/2}
 
 func main() {
@@ -55,8 +57,13 @@ func main() {
 }
 
 func draw() {
-	ticker := time.NewTicker(time.Millisecond * time.Duration(speed))
-	for range ticker.C {
+	t := 0
+	for {
+		t += 1
+		if t % DIFFICULT_UP_AFTER_TURNS == 0 {
+			speed -= int(float64(speed) / 100 * DIFFICULT_UP_PERSENT)
+		}
+
 		Move()
 
 		out := ""
@@ -97,13 +104,16 @@ func draw() {
 
 		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 		fmt.Print(out)
+		fmt.Print(speed)
 		termbox.Flush()
+
+		time.Sleep(time.Millisecond * time.Duration(speed))
 	}
 }
 
 func Move() {
-	newX := head.x + direction.x
-	newY := head.y + direction.y
+	newX := head.x + vector.x
+	newY := head.y + vector.y
 
 	if newX < 0 || newX >= WIDTH || newY < 0 || newY >= HEIGHT {
 		color.Red("Game ower")
@@ -115,17 +125,17 @@ func Move() {
 }
 
 func goDown() {
-	direction = Point{0, 1}
+	vector = Point{0, 1}
 }
 
 func goUp() {
-	direction = Point{0, -1}
+	vector = Point{0, -1}
 }
 
 func goLeft() {
-	direction = Point{-1, 0}
+	vector = Point{-1, 0}
 }
 
 func goRight() {
-	direction = Point{1, 0}
+	vector = Point{1, 0}
 }
