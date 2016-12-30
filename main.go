@@ -12,7 +12,7 @@ import (
 const WIDTH = 30
 const HEIGHT = 20
 const DIFFICULT_UP_PERSENT = 10
-const DIFFICULT_UP_AFTER_TURNS = 50
+const DIFFICULT_UP_AFTER_TURNS = 20
 var speed = 250
 
 type Point struct {
@@ -21,7 +21,7 @@ type Point struct {
 }
 
 var vector = Point{0, -1}
-var head = Point{WIDTH/2, HEIGHT/2}
+var snake = []*Point{}
 
 func main() {
 	rand.Seed(time.Now().Unix())
@@ -34,6 +34,8 @@ func main() {
 
 	termbox.SetInputMode(termbox.InputEsc)
 	termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+
+	snake = append(snake, &Point{WIDTH/2, HEIGHT/2})
 
 	go draw()
 
@@ -62,6 +64,7 @@ func draw() {
 		t += 1
 		if t % DIFFICULT_UP_AFTER_TURNS == 0 {
 			speed -= int(float64(speed) / 100 * DIFFICULT_UP_PERSENT)
+			addPart()
 		}
 
 		Move()
@@ -88,8 +91,10 @@ func draw() {
 			out += offsetX + "|"
 			for i := 0; i < WIDTH; i += 1 {
 				s := " "
-				if head.x == i && head.y == j {
-					s = color.RedString("@")
+				for _, part := range snake {
+					if part.x == i && part.y == j {
+						s = color.RedString("@")
+					}
 				}
 				out += s
 			}
@@ -112,16 +117,27 @@ func draw() {
 }
 
 func Move() {
-	newX := head.x + vector.x
-	newY := head.y + vector.y
+	newX := snake[0].x + vector.x
+	newY := snake[0].y + vector.y
 
 	if newX < 0 || newX >= WIDTH || newY < 0 || newY >= HEIGHT {
 		color.Red("Game ower")
 		os.Exit(0)
 	} else {
-		head.x = newX
-		head.y = newY
+		if len(snake) >= 2 {
+			for i := len(snake) - 2; i >= 0; i -= 1 {
+				snake[i + 1].x = snake[i].x
+				snake[i + 1].y = snake[i].y
+			}
+		}
+		snake[0].x = newX
+		snake[0].y = newY
 	}
+}
+
+func addPart() {
+	last := snake[len(snake) - 1]
+	snake = append(snake, &Point{last.x, last.y})
 }
 
 func goDown() {
