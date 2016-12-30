@@ -141,17 +141,17 @@ func addPart() {
 }
 
 func goDown() {
-	vector = Point{0, 1}
+	if vector.y == 0 { vector = Point{0, 1} }
 }
 
 func goUp() {
-	vector = Point{0, -1}
+	if vector.y == 0 { vector = Point{0, -1} }
 }
 
 func goLeft() {
-	vector = Point{-1, 0}
+	if vector.x == 0 { vector = Point{-1, 0} }
 }
 
 func goRight() {
-	vector = Point{1, 0}
+	if vector.x == 0 { vector = Point{1, 0} }
 }
