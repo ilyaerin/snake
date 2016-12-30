@@ -11,9 +11,11 @@ import (
 
 const WIDTH = 30
 const HEIGHT = 20
-const DIFFICULT_UP_PERSENT = 10
-const DIFFICULT_UP_AFTER_TURNS = 20
+const DIFFICULT_UP_PERSENT = 5
+const MINUS_PERCENT = 2
+const PLUS_PERCENT = 10
 var speed = 250
+var score = 0
 
 type Point struct {
 	x int
@@ -21,6 +23,8 @@ type Point struct {
 }
 
 var vector = Point{0, -1}
+var plus = Point{-1, -1}
+var minus = Point{-1, -1}
 var snake = []*Point{}
 
 func main() {
@@ -59,17 +63,11 @@ func main() {
 }
 
 func draw() {
-	t := 0
 	for {
-		t += 1
-		if t % DIFFICULT_UP_AFTER_TURNS == 0 {
-			speed -= int(float64(speed) / 100 * DIFFICULT_UP_PERSENT)
-			addPart()
-		}
+		gameOver := Move()
+		addPlus()
+		addMinus()
 
-		Move()
-
-		out := ""
 		offsetX := ""
 		offsetY := ""
 
@@ -81,7 +79,12 @@ func draw() {
 			offsetY += "\n"
 		}
 
-		out += offsetY + offsetX + "+"
+
+		out := fmt.Sprintf("%s%s Score: %d", offsetY, offsetX, score)
+
+		if gameOver { out += color.RedString("    Game over!") }
+
+		out += "\n" + offsetX + "+"
 		for i := 0; i < WIDTH; i += 1 {
 			out += "-"
 		}
@@ -93,9 +96,11 @@ func draw() {
 				s := " "
 				for _, part := range snake {
 					if part.x == i && part.y == j {
-						s = color.RedString("@")
+						s = color.YellowString("@")
 					}
 				}
+				if plus.x == i && plus.y == j { s = color.GreenString("@") }
+				if minus.x == i && minus.y == j { s = color.RedString("X") }
 				out += s
 			}
 			out += "|\n"
@@ -109,20 +114,19 @@ func draw() {
 
 		termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 		fmt.Print(out)
-		fmt.Print(speed)
 		termbox.Flush()
+		if gameOver { os.Exit(0) }
 
 		time.Sleep(time.Millisecond * time.Duration(speed))
 	}
 }
 
-func Move() {
+func Move() bool {
 	newX := snake[0].x + vector.x
 	newY := snake[0].y + vector.y
 
 	if newX < 0 || newX >= WIDTH || newY < 0 || newY >= HEIGHT {
-		color.Red("Game ower")
-		os.Exit(0)
+		return true
 	} else {
 		if len(snake) >= 2 {
 			for i := len(snake) - 2; i >= 0; i -= 1 {
@@ -132,12 +136,37 @@ func Move() {
 		}
 		snake[0].x = newX
 		snake[0].y = newY
+
+		if newX == plus.x && newY == plus.y { addPart() }
+		if newX == minus.x && newY == minus.y { removePart() }
+		return false
+	}
+}
+
+func addPlus() {
+	if rand.Intn(100) <= PLUS_PERCENT && plus.x == -1 {
+		plus = Point{rand.Intn(WIDTH), rand.Intn(HEIGHT)}
+	}
+}
+
+func addMinus() {
+	if rand.Intn(100) <= MINUS_PERCENT && minus.x == -1 {
+		minus = Point{rand.Intn(WIDTH + 1), rand.Intn(HEIGHT + 1)}
 	}
 }
 
 func addPart() {
 	last := snake[len(snake) - 1]
+	plus = Point{-1, -1}
 	snake = append(snake, &Point{last.x, last.y})
+	speed -= int(float64(speed) / 100 * DIFFICULT_UP_PERSENT)
+	score += 1
+}
+
+func removePart() {
+	snake = snake[:len(snake) - 1]
+	minus = Point{-1, -1}
+	score -= 1
 }
 
 func goDown() {
